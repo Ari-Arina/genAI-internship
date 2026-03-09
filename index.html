@@ -742,7 +742,7 @@
 
 <script>
   // ── UI helpers ──────────────────────────────────────────────────────────
-  var currentMode = 'paste'; // 'paste' or 'upload'
+  var currentMode = 'paste';
 
   function switchMode(mode) {
     currentMode = mode;
@@ -765,7 +765,6 @@
     }
   }
 
-  // Drag and drop
   document.addEventListener('DOMContentLoaded', function() {
     var dz = document.getElementById('dropZone');
     if (!dz) return;
@@ -823,43 +822,6 @@
     document.getElementById('step1').classList.add('active');
   }
 
-  // ── Submit ───────────────────────────────────────────────────────────────
-  function handleSubmit() {
-    var jobDescription = document.getElementById('jobDescription').value.trim();
-    document.getElementById('errorBox').classList.remove('visible');
-
-    if (!jobDescription) { showError('Please paste the job description.'); return; }
-
-    if (currentMode === 'paste') {
-      // ── TEXT PATH ──
-      var resumeText = document.getElementById('resumeText').value.trim();
-      if (!resumeText) { showError('Please paste your resume text.'); return; }
-
-      sendJSON({ resume: resumeText, expectations: jobDescription });
-
-    } else {
-      // ── PDF PATH ──
-      var fileInput = document.getElementById('resumeFile');
-      if (!fileInput.files || !fileInput.files[0]) {
-        showError('Please select a PDF file.');
-        return;
-      }
-
-      var file = fileInput.files[0];
-      var reader = new FileReader();
-      reader.onload = function() {
-        // Send as multipart/form-data so n8n's binary handling can extract the PDF
-        var formData = new FormData();
-        formData.append('resume', file, file.name);       // PDF file — n8n reads this
-        formData.append('expectations', jobDescription);   // plain text field
-
-        sendFormData(formData);
-      };
-      reader.onerror = function() { showError('Could not read the PDF file. Please try again.'); };
-      reader.readAsArrayBuffer(file);
-    }
-  }
-
   function startLoading() {
     document.getElementById('loading').classList.add('active');
     document.getElementById('submitBtn').disabled = true;
@@ -874,11 +836,61 @@
     clearInterval(stepTimer);
   }
 
-  // Send JSON (text path)
+  // ── Submit ───────────────────────────────────────────────────────────────
+  function handleSubmit() {
+    var jobDescription = document.getElementById('jobDescription').value.trim();
+    document.getElementById('errorBox').classList.remove('visible');
+
+    if (!jobDescription) { showError('Please paste the job description.'); return; }
+
+    if (currentMode === 'paste') {
+      // TEXT PATH — send as JSON directly
+      var resumeText = document.getElementById('resumeText').value.trim();
+      if (!resumeText) { showError('Please paste your resume text.'); return; }
+      sendJSON({ resume: resumeText, expectations: jobDescription });
+
+    } else {
+      // PDF PATH — read as base64, then send as JSON
+      var fileInput = document.getElementById('resumeFile');
+      if (!fileInput.files || !fileInput.files[0]) {
+        showError('Please select a PDF file.');
+        return;
+      }
+
+      var file = fileInput.files[0];
+
+      // Show loading immediately so user knows something is happening
+      startLoading();
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        // e.target.result is "data:application/pdf;base64,XXXXX..."
+        // We strip the prefix and send just the base64 string
+        var base64 = e.target.result.split(',')[1];
+        sendJSONRaw({
+          resumePdfBase64: base64,
+          resumeFileName:  file.name,
+          expectations:    jobDescription
+        });
+      };
+      reader.onerror = function() {
+        stopLoading();
+        showError('Could not read the PDF. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Send JSON and handle loading internally (for text path)
   function sendJSON(payload) {
     startLoading();
+    sendJSONRaw(payload);
+  }
+
+  // Send JSON without starting loading (loading already started for PDF path)
+  function sendJSONRaw(payload) {
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://ari-arena.app.n8n.cloud/webhook/42231867-de18-404b-b380-ad61b7e10384', true);
+    xhr.open('POST', 'https://ari-arina.app.n8n.cloud/webhook/integration-attempt', true);
     xhr.setRequestHeader('Content-Type', 'application/json');
 
     xhr.onload = function() {
@@ -886,41 +898,19 @@
       if (xhr.status >= 200 && xhr.status < 300) {
         handleResponse(xhr);
       } else {
-        showError('Server error ' + xhr.status + ': ' + xhr.statusText);
+        showError('Server error ' + xhr.status + '. Please try again.');
       }
     };
+
     xhr.onerror = function() {
       stopLoading();
       showError('Could not reach the server. Check your n8n CORS settings.');
       document.getElementById('cors-help').style.display = 'block';
     };
+
     xhr.send(JSON.stringify(payload));
   }
 
-  // Send FormData (PDF path — no Content-Type header, browser sets multipart boundary)
-  function sendFormData(formData) {
-    startLoading();
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://ari-arina.app.n8n.cloud/webhook/integration-attempt', true);
-    // Do NOT set Content-Type — browser sets it automatically with the correct boundary
-
-    xhr.onload = function() {
-      stopLoading();
-      if (xhr.status >= 200 && xhr.status < 300) {
-        handleResponse(xhr);
-      } else {
-        showError('Server error ' + xhr.status + ': ' + xhr.statusText);
-      }
-    };
-    xhr.onerror = function() {
-      stopLoading();
-      showError('Could not reach the server. Check your n8n CORS settings.');
-      document.getElementById('cors-help').style.display = 'block';
-    };
-    xhr.send(formData);
-  }
-
-  // Parse and display the response
   function handleResponse(xhr) {
     var ct = xhr.getResponseHeader('Content-Type') || '';
     var html;
