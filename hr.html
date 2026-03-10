@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Portal — ResumeAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --cream: #f5f0e8;
+    --gold: #c9a84c;
+    --rust: #c94c2e;
+    --sage: #4a6741;
+    --paper: #faf7f2;
+    --white: #ffffff;
+    --muted: #8a8578;
+    --border: rgba(10,10,15,0.10);
+    --deep: #0f0f1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--deep);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-top: 58px;
+  }
+
+  /* Background atmosphere */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 10% 30%, rgba(201,168,76,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 70%, rgba(74,103,65,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.04) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle grid texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Navbar ── */
+  .navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    background: rgba(15,15,26,0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    padding: 0 32px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .navbar-brand span { color: var(--gold); }
+
+  .navbar-brand-icon {
+    width: 28px; height: 28px;
+    background: var(--gold);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(245,240,232,0.5);
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 100px;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+  }
+
+  .nav-link:hover {
+    color: var(--cream);
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .nav-link.active {
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold);
+    font-weight: 500;
+  }
+
+  .nav-link.candidate-btn {
+    color: rgba(245,240,232,0.6);
+    border-color: rgba(245,240,232,0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-link.candidate-btn:hover {
+    color: var(--cream);
+    border-color: rgba(245,240,232,0.3);
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* ── Main container ── */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 52px 0 48px;
+    text-align: center;
+  }
+
+  .hr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hr-badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 2s ease infinite;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 900;
+    line-height: 1.06;
+    letter-spacing: -1.5px;
+    margin-bottom: 18px;
+    animation: fadeUp 0.6s 0.1s ease both;
+    color: var(--cream);
+  }
+
+  h1 em { font-style: italic; color: var(--gold); }
+
+  .subtitle {
+    font-size: 16px;
+    font-weight: 300;
+    color: rgba(245,240,232,0.55);
+    max-width: 460px;
+    margin: 0 auto;
+    line-height: 1.65;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .divider {
+    width: 48px; height: 2px;
+    background: var(--gold);
+    margin: 24px auto 0;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 18px;
+    padding: 40px;
+    backdrop-filter: blur(8px);
+    animation: fadeUp 0.6s 0.35s ease both;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(245,240,232,0.08);
+  }
+
+  .step-badge {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  /* ── Fields ── */
+  .field { margin-bottom: 24px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.5);
+    margin-bottom: 10px;
+  }
+
+  label .req { color: var(--gold); font-size: 16px; line-height: 1; }
+
+  textarea {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--cream);
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(245,240,232,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    resize: vertical;
+    min-height: 160px;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+
+  textarea::placeholder { color: rgba(245,240,232,0.25); }
+
+  textarea:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.05);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+
+  .char-count {
+    font-size: 12px;
+    color: rgba(245,240,232,0.3);
+    text-align: right;
+    margin-top: 6px;
+  }
+
+  /* ── ZIP Upload ── */
+  .zip-upload {
+    border: 2px dashed rgba(201,168,76,0.25);
+    border-radius: 14px;
+    padding: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: rgba(201,168,76,0.03);
+    position: relative;
+  }
+
+  .zip-upload:hover, .zip-upload.drag-over {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.07);
+  }
+
+  .zip-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .zip-upload input[type="file"]:focus { outline: none; }
+
+  .upload-icon-wrap {
+    width: 56px; height: 56px;
+    background: rgba(201,168,76,0.12);
+    border: 1.5px solid rgba(201,168,76,0.25);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    transition: background 0.2s;
+  }
+
+  .zip-upload:hover .upload-icon-wrap,
+  .zip-upload.drag-over .upload-icon-wrap {
+    background: rgba(201,168,76,0.2);
+  }
+
+  .upload-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 5px;
+  }
+
+  .upload-sub {
+    font-size: 13px;
+    color: rgba(245,240,232,0.35);
+  }
+
+  .file-chosen {
+    display: none;
+    margin-top: 14px;
+    background: rgba(74,103,65,0.2);
+    border: 1px solid rgba(74,103,65,0.4);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #7ec87a;
+    align-items: center;
+    gap: 7px;
+    justify-content: center;
+  }
+
+  .file-chosen.visible { display: inline-flex; }
+
+  /* ── Info strip ── */
+  .info-strip {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .info-chip {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(245,240,232,0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chip-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  .chip-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(245,240,232,0.7);
+    margin-bottom: 3px;
+  }
+
+  .chip-body {
+    font-size: 12px;
+    color: rgba(245,240,232,0.35);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 560px) {
+    .info-strip { flex-direction: column; }
+    .card { padding: 24px 18px; }
+  }
+
+  /* ── Error box ── */
+  .error-box {
+    display: none;
+    background: rgba(201,76,46,0.1);
+    border: 1px solid rgba(201,76,46,0.3);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: #e88070;
+    font-size: 14px;
+    margin-top: 16px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .error-box.visible { display: flex; }
+
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%;
+    padding: 18px 32px;
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cream);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .submit-btn:hover::before { transform: translateX(0); }
+  .submit-btn span, .submit-btn svg { position: relative; z-index: 1; }
+
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .submit-btn:disabled::before { display: none; }
+
+  /* ── Loading overlay ── */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,15,26,0.93);
+    backdrop-filter: blur(10px);
+    z-index: 300;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .loading-overlay.active { display: flex; }
+
+  .spinner {
+    width: 52px; height: 52px;
+    border: 3px solid rgba(201,168,76,0.15);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .loading-sub {
+    font-size: 13px;
+    color: rgba(245,240,232,0.4);
+    text-align: center;
+  }
+
+  .loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .loading-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(245,240,232,0.3);
+    opacity: 0;
+    transition: opacity 0.4s, color 0.4s;
+  }
+
+  .loading-step.active { opacity: 1; color: var(--cream); }
+  .loading-step.done   { opacity: 0.5; color: rgba(245,240,232,0.5); }
+
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(245,240,232,0.15);
+    flex-shrink: 0;
+    transition: background 0.4s;
+  }
+
+  .loading-step.active .step-dot { background: var(--gold); }
+  .loading-step.done   .step-dot { background: var(--sage); }
+
+  /* ── Result ── */
+  #result-container {
+    display: none;
+    margin-top: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  #result-container.visible { display: block; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .result-badge {
+    background: var(--sage);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 100px;
+  }
+
+  #result-frame {
+    width: 100%;
+    min-height: 600px;
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 16px;
+    background: var(--paper);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Processing candidates…</div>
+  <div class="loading-steps">
+    <div class="loading-step active" id="step1"><div class="step-dot"></div> Unpacking resume files</div>
+    <div class="loading-step" id="step2"><div class="step-dot"></div> Extracting candidate data</div>
+    <div class="loading-step" id="step3"><div class="step-dot"></div> Evaluating against expectations</div>
+    <div class="loading-step" id="step4"><div class="step-dot"></div> Generating comparison report</div>
+  </div>
+  <div class="loading-sub">This may take a minute for large batches. Hang tight!</div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <div class="navbar-brand-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    Resume<span>AI</span>
+  </a>
+  <div class="navbar-links">
+    <a class="nav-link candidate-btn" href="index.html">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Candidate
+    </a>
+    <a class="nav-link active" href="hr.html">HR Portal</a>
+  </div>
+</nav>
+
+<div class="container">
+  <header>
+    <div class="hr-badge">
+      <div class="hr-badge-dot"></div>
+      HR Professional Tools
+    </div>
+    <h1>Batch <em>candidate</em><br>evaluation.</h1>
+    <p class="subtitle">Upload a ZIP of resumes and paste your job expectations. Get an AI-powered evaluation for every candidate at once.</p>
+    <div class="divider"></div>
+  </header>
+
+  <!-- Info chips -->
+  <div class="info-strip">
+    <div class="info-chip">
+      <div class="chip-icon">📦</div>
+      <div>
+        <div class="chip-title">ZIP of PDFs</div>
+        <div class="chip-body">Pack all candidate resumes into one ZIP file before uploading.</div>
+      </div>
+    </div>
+    <div class="info-chip">
+      <div class="chip-icon">⚡</div>
+      <div>
+        <div class="chip-title">Batch processing</div>
+        <div class="chip-body">Every resume is evaluated against the same job expectations automatically.</div>
+      </div>
+    </div>
+    <div class="info-chip">
+      <div class="chip-icon">📊</div>
+      <div>
+        <div class="chip-title">Full report</div>
+        <div class="chip-body">Strengths, gaps, and recommendations for each candidate side by side.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step-badge">✦</div>
+      <h2>Upload resumes & define expectations</h2>
+    </div>
+
+    <div id="hrForm">
+
+      <!-- ZIP Upload -->
+      <div class="field">
+        <label>Resume Bundle <span class="req">*</span></label>
+        <div class="zip-upload" id="dropZone">
+          <input type="file" id="zipFile" accept=".zip" onchange="handleZipFile(this)">
+          <div class="upload-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="upload-title">Drop your ZIP file here or click to browse</div>
+          <div class="upload-sub">One ZIP containing all candidate PDF resumes</div>
+          <div class="file-chosen" id="zipName"></div>
+        </div>
+      </div>
+
+      <!-- Job Expectations -->
+      <div class="field">
+        <label>Job Expectations <span class="req">*</span></label>
+        <textarea id="expectations" placeholder="Paste the full job description and candidate requirements here…" oninput="updateCount(this, 'expCount')"></textarea>
+        <div class="char-count" id="expCount">0 characters</div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-box" id="errorBox">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errorMsg">Please upload a ZIP file and paste the job expectations.</span>
+      </div>
+
+      <button type="button" class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Evaluate All Candidates</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result-container">
+    <div class="result-header">
+      <span class="result-badge">✓ Evaluation Complete</span>
+    </div>
+    <iframe id="result-frame" frameborder="0" title="HR Evaluation Results"></iframe>
+  </div>
+</div>
+
+<script>
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function updateCount(el, countId) {
+    var counter = document.getElementById(countId);
+    if (counter) counter.textContent = el.value.length + ' characters';
+  }
+
+  function handleZipFile(input) {
+    var label = document.getElementById('zipName');
+    if (input.files && input.files[0]) {
+      label.textContent = '✓ ' + input.files[0].name;
+      label.classList.add('visible');
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('errorMsg').textContent = msg;
+    document.getElementById('errorBox').classList.add('visible');
+  }
+
+  function showResult(html) {
+    document.getElementById('result-frame').srcdoc = html;
+    document.getElementById('result-container').classList.add('visible');
+    setTimeout(function() {
+      document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+  }
+
+  // Drag and drop
+  document.addEventListener('DOMContentLoaded', function() {
+    var dz = document.getElementById('dropZone');
+    dz.addEventListener('dragover',  function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', function()  { dz.classList.remove('drag-over'); });
+    dz.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      var files = e.dataTransfer.files;
+      if (files.length) {
+        document.getElementById('zipFile').files = files;
+        handleZipFile(document.getElementById('zipFile'));
+      }
+    });
+  });
+
+  // ── Loading steps ────────────────────────────────────────────────────────
+  var stepTimer;
+
+  function animateSteps() {
+    var steps = ['step1','step2','step3','step4'];
+    var i = 0;
+    function markDone(idx) {
+      if (idx > 0) {
+        document.getElementById(steps[idx-1]).classList.remove('active');
+        document.getElementById(steps[idx-1]).classList.add('done');
+      }
+      if (idx < steps.length) document.getElementById(steps[idx]).classList.add('active');
+    }
+    markDone(0);
+    stepTimer = setInterval(function() {
+      i++;
+      if (i < steps.length) markDone(i);
+      else clearInterval(stepTimer);
+    }, 6000); // longer intervals for batch processing
+  }
+
+  function resetSteps() {
+    clearInterval(stepTimer);
+    ['step1','step2','step3','step4'].forEach(function(id) {
+      document.getElementById(id).classList.remove('active','done');
+    });
+    document.getElementById('step1').classList.add('active');
+  }
+
+  function startLoading() {
+    document.getElementById('loading').classList.add('active');
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('result-container').classList.remove('visible');
+    document.getElementById('errorBox').classList.remove('visible');
+    resetSteps();
+    animateSteps();
+  }
+
+  function stopLoading() {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('submitBtn').disabled = false;
+    clearInterval(stepTimer);
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────────────
+  function handleSubmit() {
+    var expectations = document.getElementById('expectations').value.trim();
+    var fileInput    = document.getElementById('zipFile');
+
+    document.getElementById('errorBox').classList.remove('visible');
+
+    if (!fileInput.files || !fileInput.files[0]) {
+      showError('Please upload a ZIP file containing the candidate resumes.');
+      return;
+    }
+    if (!expectations) {
+      showError('Please paste the job expectations.');
+      return;
+    }
+
+    var file = fileInput.files[0];
+
+    // Validate it's actually a ZIP
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      showError('Please upload a .zip file.');
+      return;
+    }
+
+    startLoading();
+
+    // Read ZIP as base64 and send as JSON
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(',')[1];
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://ari-arena.app.n8n.cloud/webhook-test/ee959d54-e2c2-4c82-bd0b-61f68659f9f1', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      xhr.onload = function() {
+        stopLoading();
+        if (xhr.status >= 200 && xhr.status < 300) {
+          var ct = xhr.getResponseHeader('Content-Type') || '';
+          var html;
+          if (ct.indexOf('text/html') !== -1) {
+            html = xhr.responseText;
+          } else {
+            try {
+              var json = JSON.parse(xhr.responseText);
+              html = json.html || json.result || json.content ||
+                '<pre style="padding:24px;font-family:monospace;white-space:pre-wrap;background:#faf7f2;color:#0a0a0f">' +
+                JSON.stringify(json, null, 2) + '</pre>';
+            } catch(err) { html = xhr.responseText; }
+          }
+          showResult(html);
+        } else {
+          showError('Server error ' + xhr.status + '. Please try again.');
+        }
+      };
+
+      xhr.onerror = function() {
+        stopLoading();
+        showError('Could not reach the server. Make sure the n8n workflow is active and CORS is enabled.');
+      };
+
+      xhr.send(JSON.stringify({
+        zipBase64:    base64,
+        zipFileName:  file.name,
+        expectations: expectations
+      }));
+    };
+
+    reader.onerror = function() {
+      stopLoading();
+      showError('Could not read the ZIP file. Please try again.');
+    };
+
+    reader.readAsDataURL(file);
+  }
+</script>
+</body>
+</html>
