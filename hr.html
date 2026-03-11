@@ -563,6 +563,112 @@
   }
 
   /* ── Animations ── */
+
+  /* Optional field toggle */
+  .optional-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  .optional-toggle input[type="checkbox"] { display: none; }
+
+  .toggle-track {
+    width: 36px; height: 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(245,240,232,0.2);
+    border-radius: 100px;
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: rgba(245,240,232,0.4);
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .optional-toggle input:checked + .toggle-track {
+    background: rgba(201,168,76,0.25);
+    border-color: var(--gold);
+  }
+
+  .optional-toggle input:checked + .toggle-track::after {
+    transform: translateX(16px);
+    background: var(--gold);
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(245,240,232,0.55);
+    transition: color 0.2s;
+  }
+
+  .optional-toggle:has(input:checked) .toggle-label {
+    color: var(--gold);
+  }
+
+  .collapsible-field {
+    display: none;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .collapsible-field.open { display: block; }
+
+  /* Eligibility warning banner */
+  .eligibility-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(201,76,46,0.08);
+    border: 1px solid rgba(201,76,46,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #e88070;
+    line-height: 1.5;
+  }
+
+  /* Culture info note */
+  .culture-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: rgba(245,240,232,0.5);
+    line-height: 1.5;
+  }
+
+  /* Section divider inside card */
+  .field-divider {
+    height: 1px;
+    background: rgba(245,240,232,0.07);
+    margin: 28px 0;
+  }
+
+  #hrEmail:focus {
+    border-color: var(--gold) !important;
+    background: rgba(201,168,76,0.06) !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1) !important;
+  }
+
+  #hrEmail::placeholder { color: rgba(245,240,232,0.25); }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -678,7 +784,76 @@
         <div class="char-count" id="expCount">0 characters</div>
       </div>
 
+      <div class="field-divider"></div>
+
+      <!-- Eligibility Requirements (optional) -->
+      <div class="field">
+        <label for="toggleEligibility" style="margin-bottom:0">
+          Eligibility Requirements
+          <span style="font-size:10px;letter-spacing:0.06em;color:rgba(245,240,232,0.3);margin-left:6px">OPTIONAL</span>
+        </label>
+        <label class="optional-toggle" id="toggleEligibility">
+          <input type="checkbox" id="eligibilityCheck" onchange="toggleField('eligibilityField', this)">
+          <div class="toggle-track"></div>
+          <span class="toggle-label">Add mandatory eligibility requirements</span>
+        </label>
+        <div class="collapsible-field" id="eligibilityField">
+          <div class="eligibility-warning">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>These are <strong>non-negotiable</strong>. Candidates who fail any eligibility requirement will be automatically marked as <strong>Immediate Rejection</strong> regardless of other qualifications.</span>
+          </div>
+          <textarea id="eligibility" placeholder="List mandatory requirements, one per line. e.g:&#10;Must have a Bachelor's degree in Computer Science or related field&#10;Must be legally authorized to work in the US&#10;Must have 2+ years of Python experience" style="min-height:130px" oninput="updateCount(this, 'eligCount')"></textarea>
+          <div class="char-count" id="eligCount">0 characters</div>
+        </div>
+      </div>
+
+      <!-- Culture Profile (optional) -->
+      <div class="field">
+        <label for="toggleCulture" style="margin-bottom:0">
+          Culture Profile
+          <span style="font-size:10px;letter-spacing:0.06em;color:rgba(245,240,232,0.3);margin-left:6px">OPTIONAL</span>
+        </label>
+        <label class="optional-toggle" id="toggleCulture">
+          <input type="checkbox" id="cultureCheck" onchange="toggleField('cultureField', this)">
+          <div class="toggle-track"></div>
+          <span class="toggle-label">Add culture & work style expectations</span>
+        </label>
+        <div class="collapsible-field" id="cultureField">
+          <div class="culture-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>If a candidate's resume doesn't provide enough information to assess culture fit, they will be flagged in recommendations and ranked as <strong style="color:rgba(245,240,232,0.7)">Needs Interview</strong>.</span>
+          </div>
+          <textarea id="culture" placeholder="Describe your team's work style and culture. e.g:&#10;Work is primarily collaborative — most projects require daily teamwork&#10;Fast-paced environment with frequent context switching&#10;Strong emphasis on written communication (async-first team)&#10;Growth mindset is highly valued over seniority" style="min-height:130px" oninput="updateCount(this, 'cultCount')"></textarea>
+          <div class="char-count" id="cultCount">0 characters</div>
+        </div>
+      </div>
+
       <!-- Error -->
+      <!-- Email (optional) -->
+      <div class="field" style="margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:8px">
+          Email Address
+          <span style="font-size:10px;letter-spacing:0.06em;color:rgba(245,240,232,0.3);font-weight:400;text-transform:uppercase">Optional</span>
+        </label>
+        <div style="position:relative">
+          <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:rgba(245,240,232,0.3)"
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <input type="email" id="hrEmail" placeholder="Get the full report emailed as a PDF…"
+            style="width:100%;padding:12px 16px 12px 40px;font-family:'DM Sans',sans-serif;
+            font-size:14px;color:var(--cream);background:rgba(255,255,255,0.05);
+            border:1.5px solid rgba(245,240,232,0.1);border-radius:10px;outline:none;
+            transition:border-color 0.2s,box-shadow 0.2s,background 0.2s">
+        </div>
+        <div style="font-size:12px;color:rgba(245,240,232,0.3);margin-top:6px;display:flex;align-items:center;gap:5px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5.05 2 2 0 0 1 3.58 3h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.27-.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 18v3"/></svg>
+          Leave blank to skip — report will still appear on screen
+        </div>
+      </div>
+
       <div class="error-box" id="errorBox">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="errorMsg">Please upload a ZIP file and paste the job expectations.</span>
@@ -702,6 +877,11 @@
 
 <script>
   // ── Helpers ──────────────────────────────────────────────────────────────
+  function toggleField(fieldId, checkbox) {
+    var field = document.getElementById(fieldId);
+    field.classList.toggle('open', checkbox.checked);
+  }
+
   function updateCount(el, countId) {
     var counter = document.getElementById(countId);
     if (counter) counter.textContent = el.value.length + ' characters';
@@ -849,10 +1029,22 @@
         showError('Could not reach the server. Make sure the n8n workflow is active and CORS is enabled.');
       };
 
+      var eligibility = document.getElementById('eligibilityCheck').checked
+        ? document.getElementById('eligibility').value.trim()
+        : '';
+      var culture = document.getElementById('cultureCheck').checked
+        ? document.getElementById('culture').value.trim()
+        : '';
+
+      var hrEmail = document.getElementById('hrEmail').value.trim();
+
       xhr.send(JSON.stringify({
         zipBase64:    base64,
         zipFileName:  file.name,
-        expectations: expectations
+        expectations: expectations,
+        eligibility:  eligibility,
+        culture:      culture,
+        email:        hrEmail
       }));
     };
 
