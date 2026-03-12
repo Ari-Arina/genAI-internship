@@ -664,6 +664,11 @@
   /* Push page content below navbar */
   body { padding-top: 58px; }
 
+  #userEmail:focus {
+    border-color: var(--gold) !important;
+    background: white !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12) !important;
+  }
 </style>
 </head>
 <body>
@@ -771,6 +776,30 @@
         <textarea id="jobDescription" placeholder="Paste the job posting here…"
           style="min-height:180px;width:100%" oninput="updateCount(this,'jdCount')"></textarea>
         <div class="char-count" id="jdCount">0 characters</div>
+      </div>
+
+      <!-- Email (optional) -->
+      <div class="field" style="margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:8px">
+          Email Address
+          <span style="font-size:10px;letter-spacing:0.06em;color:var(--muted);font-weight:400;text-transform:uppercase">Optional</span>
+        </label>
+        <div style="position:relative">
+          <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)"
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <input type="email" id="userEmail" placeholder="Get your results emailed as a PDF…"
+            style="width:100%;padding:12px 16px 12px 40px;font-family:'DM Sans',sans-serif;
+            font-size:15px;color:var(--ink);background:var(--paper);border:1.5px solid var(--border);
+            border-radius:10px;outline:none;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s">
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:5px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5.05 2 2 0 0 1 3.58 3h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.27-.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 18v3"/></svg>
+          Leave blank to skip — your report will still appear on screen
+        </div>
       </div>
 
       <!-- Error box -->
@@ -947,7 +976,8 @@
       // TEXT PATH — send as JSON directly
       var resumeText = document.getElementById('resumeText').value.trim();
       if (!resumeText) { showError('Please paste your resume text.'); return; }
-      sendJSON({ resume: resumeText, expectations: jobDescription });
+      var userEmail = document.getElementById('userEmail').value.trim();
+      sendJSON({ resume: resumeText, expectations: jobDescription, email: userEmail });
 
     } else {
       // PDF PATH — read as base64, then send as JSON
@@ -967,10 +997,12 @@
         // e.target.result is "data:application/pdf;base64,XXXXX..."
         // We strip the prefix and send just the base64 string
         var base64 = e.target.result.split(',')[1];
+        var userEmail = document.getElementById('userEmail').value.trim();
         sendJSONRaw({
           resumePdfBase64: base64,
           resumeFileName:  file.name,
-          expectations:    jobDescription
+          expectations:    jobDescription,
+          email:           userEmail
         });
       };
       reader.onerror = function() {
